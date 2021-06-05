@@ -1,6 +1,6 @@
 node {
     stage('SCM') {
-        git 'https://github.com/asquarezone/game-of-life.git'
+        git 'https://github.com/jenkins-dummy-project/spring-petclinic.git'
     }
     
     stage('Build & Package') {
