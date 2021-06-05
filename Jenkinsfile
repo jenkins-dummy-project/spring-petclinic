@@ -1,27 +1,25 @@
-pipeline{
-    agent {
-        label 'MASTER'
+node {
+    stage('SCM') {
+        git 'https://github.com/asquarezone/game-of-life.git'
     }
-
-    stages{
-
-        stage('Pull Repo'){
-            steps {
-                git 'https://github.com/jenkins-dummy-project/spring-petclinic.git'
-                
-            }
-        }
-
-        stage('Build'){
-            steps {
-                sh 'mvn clean install'
-            }
-        }
-
-        stage('Publish'){
-            steps{
-                junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
-            }
-            
+    
+    stage('Build & Package') {
+        withSonarQubeEnv('sonar') {
+            sh 'mvn clean package sonar:sonar'
         }
     }
+    
+    stage("Quality Gate") {
+        timeout(time: 1, unit: 'HOURS') {
+              def qg = waitForQualityGate()
+              if (qg.status != 'OK') {
+                  error "Pipeline aborted due to quality gate failure: ${qg.status}"
+              }
+          }
+    }
+    
+    stage('Results'){
+        archive 'gameoflife-web/target/gameoflife.war'
+        junit 'gameoflife-web/target/surefire-reports/*.xml'
+    }
+}
